@@ -78,8 +78,11 @@ class Server(object):
         :param room_number: int
         :return: str
         """
-
-        # TODO: YOUR CODE HERE
+        choices = {1:"The room is dimly lit but you can see a red rug on the floor",
+                   2: "The room is tacky and smells of beer",
+                   3: "The room is plane with blue carpet",
+                   4: "The room has a faint glow and contains a marble floor"}
+        return choices[room_number]
 
         pass
 
@@ -109,6 +112,14 @@ class Server(object):
         """
 
         # TODO: YOUR CODE HERE
+        received = b''
+        while b'\n' not in received:
+            received += self.client_connection.recv(16)
+
+            if len(received) > 2048:
+                self.done = True
+                break
+        self.input_buffer = received.decode().strip()
 
         pass
 
@@ -133,9 +144,16 @@ class Server(object):
         :return: None
         """
 
-        # TODO: YOUR CODE HERE
+        room_map = {
+            "north": 3,
+            "south": 0,
+            "east": 2,
+            "west": 1
+        }
+        room_number = room_map[argument]
+        self.room = room_number
 
-        pass
+        self.output_buffer = self.room_description(room_map[argument])
 
     def say(self, argument):
         """
@@ -151,9 +169,8 @@ class Server(object):
         :return: None
         """
 
-        # TODO: YOUR CODE HERE
+        self.output_buffer = f'You say, {argument}'
 
-        pass
 
     def quit(self, argument):
         """
@@ -167,9 +184,9 @@ class Server(object):
         :return: None
         """
 
-        # TODO: YOUR CODE HERE
+        self.done = True
+        self.output_buffer = "Goodbye!"
 
-        pass
 
     def route(self):
         """
@@ -183,9 +200,16 @@ class Server(object):
         :return: None
         """
 
-        # TODO: YOUR CODE HERE
+        # if input_buffer were "say hello there"
+        command = self.input_buffer.split(" ")[0]  # then command is "say"
+        arguments = " ".join(self.input_buffer.split(" ")[1])  # and arguments is "hello there"
+        if command == "say":
+            self.say(arguments)
+        if command == "move":
+            self.move(arguments)
+        if command == "quit":
+            self.quit(arguments)
 
-        pass
 
     def push_output(self):
         """
@@ -197,9 +221,8 @@ class Server(object):
         :return: None 
         """
 
-        # TODO: YOUR CODE HERE
-
-        pass
+        sent = "OK! " + self.output_buffer + "\n"
+        self.client_connection.sendall(sent.encode())
 
     def serve(self):
         self.connect()
